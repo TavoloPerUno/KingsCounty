@@ -1,0 +1,91 @@
+---
+title: "Exploratory Variography"
+author: "Manoradhan Murugesan"
+date: "11/13/2016"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, tidy.opts=list(width.cutoff=80),tidy=TRUE)
+```
+
+## Overview Dataset description
+
+Variogram is a function describing the degree of spatial dependence of a spatial random field or stochastic process in terms of the variance of the difference between field values at two locations across realizations of the field. Seattle's 98103 zip code house prices dataset is used in this exploratory variography analysis to study the trends in price/sqft.
+
+## Summary of findings
+
+The variogram plot reveals an upward sloping trend in data, which is a violation of the stationarity of variance. Outliers were identified from the variogram cloud plot, revealing that other factors such as a view of the lake in this zip code and building amenities and age differences are at play here leading to extreme differences in rates per sqft between properties located close to each other. The upward sloping trend was  moderated by the transformation, log(RATEPSQFT)~long+lat. Since distances larger than 0.015 have large fluctuations and a downward slope, the cutoff was chosen as 0.015. The directional variograms dont reveal significant differences in scale (sill and nuggets) between angles, however, spatial correlation is the weakest in  $135^{\circ}$ direction and strongest in $0^{\circ}$. Smaller bin sizes result in more granular plots which dont flatten, and this however must be taken in the light of reduced number of points per bin and the scale of y-axis. This could be due to structural differences and age differences between properties which get scaled up due to reduced number of points per bin.  
+
+## Analysis
+
+The data was loaded for analysis and the summary reveals the variable of interest, RATEPSQFT, and the location information.
+
+```{r}
+library(foreign)
+library(sp) 
+library(gstat)
+
+kng <- read.dbf("98103.dbf")
+
+summary(kng)
+```
+
+We convert this to a SpatialPointsDataFrame with the coordinates function.
+
+```{r}
+coordinates(kng) <- ~long+lat
+summary(kng)
+```
+
+We then create a variogram cloud and plot it to identify outliers.
+
+```{r}
+vcloud <- variogram(RATEPSQFT~1,data=kng,cloud=TRUE)
+summary(vcloud)
+plot(vcloud,pch=1,col="blue")
+```
+
+```{r eval=FALSE}
+plot(plot(vcloud,identify=T),kng,cex=3*kng$RATEPSQFT/max(kng$RATEPSQFT),pch=
+       1)
+```
+
+$$\includegraphics{Outliers.png}$$
+
+We then plot an empirical variogram plot and examine the number of points in each bin.
+
+```{r}
+v1 <- variogram(log(RATEPSQFT)~1,kng)
+plot(v1, type="b",pch=2, pl=T)
+```
+
+We see that there is an upward sloping trend, revealing the spatial dependence. We use a regression specification of RATEPSQFT in terms of the location coordinates to make the plot flatten out.
+
+```{r}
+v2 <- variogram(log(RATEPSQFT)~long+lat,kng)
+plot(v2, type="b",pch=2, pl=T)
+```
+
+We then plot directional variograms to see if the observed semivariance trend is the same in all the four directions.
+
+```{r}
+vgm.aniso <- variogram(log(RATEPSQFT) ~ long+lat, kng, alpha = c(0, 45, 90, 135))
+plot(vgm.aniso, type="b")
+```
+
+Since the plots tend to fluctuate more after 0.015 and since we are only concerned with the points that are closer to each other, we choose a safe cut-off distance of 0.015.
+
+```{r}
+vgm.aniso <- variogram(log(RATEPSQFT) ~ long+lat, kng, alpha = c(0, 45, 90, 135), cutoff=0.015)
+plot(vgm.aniso, type="b")
+```
+
+From the directional plots, we see that there is slight change in sill and nuggets between $0^{\circ}$ and other directions. Also $135^{\circ}$ direction has the least strong correlation while $0^{\circ}$ has the strongest correlation. 
+
+Reducing bin size, we see more volatile plots, revealing more granular differences in the rates. This could be due to structural differences and age differences between properties which get scaled up due to reduced number of points per bin.
+
+```{r}
+vgm.aniso <- variogram(log(RATEPSQFT) ~ long+lat, kng, alpha = c(0, 45, 90, 135), cutoff=0.005)
+plot(vgm.aniso, type="b")
+```

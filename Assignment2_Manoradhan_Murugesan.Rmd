@@ -1,0 +1,44 @@
+---
+title: "Kings County - Rates per sqft"
+author: "Manoradhan Murugesan"
+date: "10/23/2016"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, tidy.opts=list(width.cutoff=80),tidy=TRUE)
+```
+
+## Overview and dataset description
+
+With the assumption that an apartment's carpet area and that of its neighbouring properties together influence the price per sqft, this assignment maps and explores the underlying potential relationships in Kings County, WA, apartment sales data for the period May, 2014 - May, 2015. The data was sourced from Kaggle.com's [public data domain](https://www.kaggle.com/harlfoxem/housesalesprediction).
+
+The variables of interest are,
+
+* RATEPSQFT
+* sqftAreaOfTheUnit
+* sqft15 - average sqft area of the 15 closest neighbours.
+
+## Scatter plot matrices
+
+The scatter plot matrices reveal **structural instabilities** in sqftAreaOfTheUnit Vs RATEPSQFT and RATEPSQFT Vs sqft15 relationships. 
+
+### Zip code 98101
+$$\includegraphics{98101map.png}$$
+$$\includegraphics{98101.png}$$
+Both the relationships show structural breaks, both increasing for a while and then decreasing, perhaps implying that for smaller properties, size is a big component in the price, while not so for bigger properties. As this is a downtown location, the location factor tends to dominate in larger apartments' price per sq ft. The Chow's test also rejects the null hypotheses.
+
+### Zip code 98107
+$$\includegraphics{98107map.png}$$
+$$\includegraphics{98107.png}$$
+Moving away from downtown, we see higher slopes in the relationships, which reveal **heterogeneity**, which means that the downtown location factor is diminishing as we move to the suburbs. The underlying non-linear relationships however tend to follow a similar trend as for zip code 98101.
+
+### Zip code 98112
+$$\includegraphics{98112map.png}$$
+$$\includegraphics{98112.png}$$
+More **heterogeneity** is observed : the slope of sqft15 Vs RATEPSQFT relationship has turned negative in this zipcode, implying its diminishing role on price. 
+
+## Conditional plots
+To study the interactions between the three variables of interest, conditional maps are drawn.
+$$\includegraphics{conditional.png}$$
+The plot reveals that smaller and expensive units are located more downtown. The size of the neighbours also impact the size of larger units in the outer neighbourhoods. This implies that size of the neighbours impact more for smaller apartments in downtown than for larger units. For outer neighbourhoods, the positive impact stays throughout.
